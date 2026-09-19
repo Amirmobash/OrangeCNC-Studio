@@ -69,4 +69,4 @@ Search engines decide ranking and indexing themselves, so no repository can guar
 
 ## License
 
-MIT © 2026 Amir Mobasheraghdam
+MIT © 2025 Amir Mobasheraghdam
