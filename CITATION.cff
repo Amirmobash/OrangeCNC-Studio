@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: OrangeCNC Studio
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: Mobasheraghdam
+    given-names: Amir
+    alias: Amir Mobasheraghdam
+version: 0.2.0
+date-released: 2026-09-19
+license: MIT
+repository-code: https://github.com/REPLACE_WITH_YOUR_GITHUB/Amir-Mobasheraghdam-OrangeCNC-Studio
+keywords:
+  - CNC
+  - G-code
+  - Rust
+  - CAD/CAM
+  - machine simulation

@@ -1,0 +1,11 @@
+[package]
+name = "orangecnc-simulation"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+orangecnc-domain = { path = "../domain" }
+orangecnc-motion = { path = "../motion" }
+orangecnc-machine = { path = "../machine" }

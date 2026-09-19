@@ -1,0 +1,9 @@
+; OrangeCNC Studio demo by Amir Mobasheraghdam
+G21 G90
+G0 X20 Y20 Z0
+G1 X100 Y20 F1500
+G2 X100 Y100 I0 J40
+G1 X20 Y100
+G3 X20 Y20 I0 J-40
+M5
+M30

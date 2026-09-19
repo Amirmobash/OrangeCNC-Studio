@@ -1,0 +1,6 @@
+; R arc examples
+G21 G90 G17
+G0 X0 Y0
+G1 X10 Y0 F600
+G3 X20 Y0 R5
+G2 X30 Y0 R5

@@ -1,0 +1,10 @@
+[package]
+name = "orangecnc-machine"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+orangecnc-domain = { path = "../domain" }
+serde.workspace = true

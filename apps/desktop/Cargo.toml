@@ -1,0 +1,17 @@
+[package]
+name = "orangecnc-desktop"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+eframe.workspace = true
+egui.workspace = true
+rfd.workspace = true
+orangecnc-domain = { path = "../../crates/domain" }
+orangecnc-gcode = { path = "../../crates/gcode" }
+orangecnc-motion = { path = "../../crates/motion" }
+orangecnc-machine = { path = "../../crates/machine" }
+orangecnc-simulation = { path = "../../crates/simulation" }

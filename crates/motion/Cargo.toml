@@ -1,0 +1,9 @@
+[package]
+name = "orangecnc-motion"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+orangecnc-domain = { path = "../domain" }
