@@ -1,4 +1,4 @@
-# Amir Mobasheraghdam — OrangeCNC Studio
+#OrangeCNC Studio
 
 **OrangeCNC Studio** is an open-source CNC workstation rebuilt as a clean Rust codebase by **Amir Mobasheraghdam**. The desktop interface is German-first and uses a white/orange visual system.
 
