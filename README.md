@@ -6,10 +6,7 @@
 > Project: **OrangeCNC Studio**  
 > Focus: G-code parsing, toolpath planning, CNC simulation, machine limits and future controller integration.
 
-![Status](https://img.shields.io/badge/status-active-orange)
-![Language](https://img.shields.io/badge/UI-Deutsch-orange)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Rust](https://img.shields.io/badge/Rust-2021-black)
+
 
 ## Why this rewrite exists
 
