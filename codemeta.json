@@ -11,7 +11,8 @@
   },
   "programmingLanguage": "Rust",
   "license": "https://spdx.org/licenses/MIT.html",
-  "version": "0.2.0",
+  "version": "0.2.1",
+  "codeRepository": "https://github.com/Amirmobash/OrangeCNC-Studio",
   "keywords": [
     "CNC",
     "G-code",

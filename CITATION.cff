@@ -6,10 +6,10 @@ authors:
   - family-names: Mobasheraghdam
     given-names: Amir
     alias: Amir Mobasheraghdam
-version: 0.2.0
-date-released: 2026-09-19
+version: 0.2.1
+date-released: 2026-10-04
 license: MIT
-repository-code: https://github.com/REPLACE_WITH_YOUR_GITHUB/Amir-Mobasheraghdam-OrangeCNC-Studio
+repository-code: https://github.com/Amirmobash/OrangeCNC-Studio
 keywords:
   - CNC
   - G-code
