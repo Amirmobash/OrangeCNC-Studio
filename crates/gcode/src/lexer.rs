@@ -30,20 +30,21 @@ pub fn lex_line(source: &str) -> Result<Vec<Token>, LexError> {
     let mut index = 0;
 
     while index < chars.len() {
-        let c = chars[index];
-        if c.is_whitespace() || c == '%' {
+        let current = chars[index];
+
+        if current.is_whitespace() || current == '%' {
             index += 1;
             continue;
         }
 
-        if c == ';' {
+        if current == ';' {
             let comment: String = chars[index + 1..].iter().collect();
             tokens.push(Token::Comment(comment.trim().to_owned()));
             break;
         }
 
-        if c == '(' {
-            let start = index + 1;
+        if current == '(' {
+            let comment_start = index + 1;
             index += 1;
             while index < chars.len() && chars[index] != ')' {
                 index += 1;
@@ -51,19 +52,21 @@ pub fn lex_line(source: &str) -> Result<Vec<Token>, LexError> {
             if index >= chars.len() {
                 return Err(LexError::UnclosedComment);
             }
-            let comment: String = chars[start..index].iter().collect();
+
+            let comment: String = chars[comment_start..index].iter().collect();
             tokens.push(Token::Comment(comment.trim().to_owned()));
             index += 1;
             continue;
         }
 
-        if !c.is_ascii_alphabetic() {
-            return Err(LexError::InvalidCharacter(c));
+        if !current.is_ascii_alphabetic() {
+            return Err(LexError::InvalidCharacter(current));
         }
 
-        let address = c.to_ascii_uppercase();
+        let address = current.to_ascii_uppercase();
         index += 1;
-        let start = index;
+        let number_start = index;
+
         if index < chars.len() && matches!(chars[index], '+' | '-') {
             index += 1;
         }
@@ -72,7 +75,7 @@ pub fn lex_line(source: &str) -> Result<Vec<Token>, LexError> {
         let mut saw_dot = false;
         while index < chars.len() {
             match chars[index] {
-                d if d.is_ascii_digit() => {
+                digit if digit.is_ascii_digit() => {
                     saw_digit = true;
                     index += 1;
                 }
@@ -87,10 +90,16 @@ pub fn lex_line(source: &str) -> Result<Vec<Token>, LexError> {
         if !saw_digit {
             return Err(LexError::MissingValue(address));
         }
-        let raw: String = chars[start..index].iter().collect();
+
+        let raw: String = chars[number_start..index].iter().collect();
         let value = raw
             .parse::<f64>()
             .map_err(|_| LexError::InvalidNumber(address, raw.clone()))?;
+
+        if !value.is_finite() {
+            return Err(LexError::InvalidNumber(address, raw));
+        }
+
         tokens.push(Token::Word(Word { address, value }));
     }
 
@@ -111,5 +120,10 @@ mod tests {
     fn semicolon_comment_ends_line() {
         let tokens = lex_line("G1 X10 ; Schlichtgang").unwrap();
         assert!(matches!(tokens.last(), Some(Token::Comment(c)) if c == "Schlichtgang"));
+    }
+
+    #[test]
+    fn unterminated_parenthesis_comment_is_rejected() {
+        assert_eq!(lex_line("G1 X10 (oops"), Err(LexError::UnclosedComment));
     }
 }

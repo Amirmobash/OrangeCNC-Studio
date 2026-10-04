@@ -4,9 +4,9 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+repository.workspace = true
 
 [dependencies]
-anyhow.workspace = true
 eframe.workspace = true
 egui.workspace = true
 rfd.workspace = true

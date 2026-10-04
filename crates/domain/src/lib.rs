@@ -28,22 +28,31 @@ impl Vec3 {
     pub fn lerp(self, other: Self, t: f64) -> Self {
         self + (other - self) * t
     }
+
+    pub fn is_finite(self) -> bool {
+        self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
+    }
 }
 
 impl std::ops::Add for Vec3 {
     type Output = Self;
+
     fn add(self, rhs: Self) -> Self::Output {
         Self::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
     }
 }
+
 impl std::ops::Sub for Vec3 {
     type Output = Self;
+
     fn sub(self, rhs: Self) -> Self::Output {
         Self::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
     }
 }
+
 impl std::ops::Mul<f64> for Vec3 {
     type Output = Self;
+
     fn mul(self, rhs: f64) -> Self::Output {
         Self::new(self.x * rhs, self.y * rhs, self.z * rhs)
     }
@@ -87,6 +96,12 @@ pub enum MotionMode {
     Linear,
     ArcClockwise,
     ArcCounterClockwise,
+}
+
+impl MotionMode {
+    pub const fn is_arc(self) -> bool {
+        matches!(self, Self::ArcClockwise | Self::ArcCounterClockwise)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]

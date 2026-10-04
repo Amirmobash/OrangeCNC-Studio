@@ -31,11 +31,18 @@ impl Parser {
     }
 
     pub fn parse_program(&mut self, source: &str) -> Result<Vec<ParsedLine>, String> {
-        source.lines().map(|line| self.parse_line(line)).collect()
+        source
+            .lines()
+            .enumerate()
+            .map(|(index, line)| {
+                self.parse_line(line)
+                    .map_err(|error| format!("Zeile {}: {error}", index + 1))
+            })
+            .collect()
     }
 
     pub fn parse_line(&mut self, source: &str) -> Result<ParsedLine, String> {
-        let tokens = lex_line(source).map_err(|e| e.to_string())?;
+        let tokens = lex_line(source).map_err(|error| error.to_string())?;
         let mut words: BTreeMap<char, Vec<f64>> = BTreeMap::new();
         let mut comments = Vec::new();
 
@@ -47,7 +54,7 @@ impl Parser {
         }
 
         self.apply_g_codes(&words)?;
-        self.apply_scalar_words(&words);
+        self.apply_scalar_words(&words)?;
 
         let mut commands = Vec::new();
         if words.contains_key(&'T') {
@@ -56,11 +63,11 @@ impl Parser {
             }
         }
 
-        if has_motion_coordinates(&words) {
+        if should_emit_motion(&words, self.state.motion) {
             commands.push(self.build_move(&words)?);
         }
 
-        self.apply_m_codes(&words, &mut commands);
+        self.apply_m_codes(&words, &mut commands)?;
         commands.extend(comments.into_iter().map(CanonicalCommand::Comment));
 
         if commands.is_empty() {
@@ -71,9 +78,8 @@ impl Parser {
     }
 
     fn apply_g_codes(&mut self, words: &BTreeMap<char, Vec<f64>>) -> Result<(), String> {
-        for &g in words.get(&'G').into_iter().flatten() {
-            let code = rounded_code(g)?;
-            match code {
+        for &g_code in words.get(&'G').into_iter().flatten() {
+            match integer_code(g_code)? {
                 0 => self.state.motion = MotionMode::Rapid,
                 1 => self.state.motion = MotionMode::Linear,
                 2 => self.state.motion = MotionMode::ArcClockwise,
@@ -91,18 +97,26 @@ impl Parser {
         Ok(())
     }
 
-    fn apply_scalar_words(&mut self, words: &BTreeMap<char, Vec<f64>>) {
+    fn apply_scalar_words(&mut self, words: &BTreeMap<char, Vec<f64>>) -> Result<(), String> {
         if let Some(&feed) = last(words, 'F') {
+            if feed < 0.0 {
+                return Err(format!("Negativer Vorschub ist ungültig: {feed}"));
+            }
             self.state.feed_mm_min = Some(self.state.units.to_mm(feed));
         }
+
         if let Some(&rpm) = last(words, 'S') {
+            if rpm < 0.0 {
+                return Err(format!("Negative Spindeldrehzahl ist ungültig: {rpm}"));
+            }
             self.state.spindle_rpm = Some(rpm);
         }
+
         if let Some(&tool) = last(words, 'T') {
-            if tool >= 0.0 {
-                self.state.selected_tool = Some(tool.round() as u32);
-            }
+            self.state.selected_tool = Some(tool_number(tool)?);
         }
+
+        Ok(())
     }
 
     fn build_move(&mut self, words: &BTreeMap<char, Vec<f64>>) -> Result<CanonicalCommand, String> {
@@ -113,9 +127,9 @@ impl Parser {
             self.coordinate(words, 'Z', start.z),
         );
 
-        let arc = if matches!(self.state.motion, MotionMode::ArcClockwise | MotionMode::ArcCounterClockwise) {
-            if let Some(&r) = last(words, 'R') {
-                Some(ArcDefinition::Radius(self.state.units.to_mm(r)))
+        let arc = if self.state.motion.is_arc() {
+            if let Some(&radius) = last(words, 'R') {
+                Some(ArcDefinition::Radius(self.state.units.to_mm(radius)))
             } else {
                 Some(ArcDefinition::CenterOffset {
                     i: self.state.units.to_mm(last(words, 'I').copied().unwrap_or(0.0)),
@@ -139,55 +153,88 @@ impl Parser {
     }
 
     fn coordinate(&self, words: &BTreeMap<char, Vec<f64>>, address: char, current: f64) -> f64 {
-        let Some(&raw) = last(words, address) else { return current };
-        let mm = self.state.units.to_mm(raw);
+        let Some(&raw) = last(words, address) else {
+            return current;
+        };
+
+        let millimeters = self.state.units.to_mm(raw);
         match self.state.distance {
-            DistanceMode::Absolute => mm,
-            DistanceMode::Incremental => current + mm,
+            DistanceMode::Absolute => millimeters,
+            DistanceMode::Incremental => current + millimeters,
         }
     }
 
-    fn apply_m_codes(&self, words: &BTreeMap<char, Vec<f64>>, out: &mut Vec<CanonicalCommand>) {
-        for &m in words.get(&'M').into_iter().flatten() {
-            let Ok(code) = rounded_code(m) else { continue };
-            match code {
-                3 => out.push(CanonicalCommand::Spindle {
+    fn apply_m_codes(
+        &self,
+        words: &BTreeMap<char, Vec<f64>>,
+        commands: &mut Vec<CanonicalCommand>,
+    ) -> Result<(), String> {
+        for &m_code in words.get(&'M').into_iter().flatten() {
+            match integer_code(m_code)? {
+                3 => commands.push(CanonicalCommand::Spindle {
                     enabled: true,
                     clockwise: true,
                     rpm: self.state.spindle_rpm,
                 }),
-                4 => out.push(CanonicalCommand::Spindle {
+                4 => commands.push(CanonicalCommand::Spindle {
                     enabled: true,
                     clockwise: false,
                     rpm: self.state.spindle_rpm,
                 }),
-                5 => out.push(CanonicalCommand::Spindle {
+                5 => commands.push(CanonicalCommand::Spindle {
                     enabled: false,
                     clockwise: true,
                     rpm: self.state.spindle_rpm,
                 }),
-                6 => out.push(CanonicalCommand::ToolChange),
-                2 | 30 => out.push(CanonicalCommand::ProgramEnd),
+                6 => commands.push(CanonicalCommand::ToolChange),
+                2 | 30 => commands.push(CanonicalCommand::ProgramEnd),
                 _ => {}
             }
         }
+        Ok(())
     }
 }
 
-fn rounded_code(value: f64) -> Result<i32, String> {
+fn integer_code(value: f64) -> Result<i32, String> {
     let rounded = value.round();
     if (value - rounded).abs() > 1e-9 {
-        return Err(format!("Nicht ganzzahliger G/M-Code wird noch nicht unterstützt: {value}"));
+        return Err(format!(
+            "Nicht ganzzahliger G/M-Code wird noch nicht unterstützt: {value}"
+        ));
     }
     Ok(rounded as i32)
+}
+
+fn tool_number(value: f64) -> Result<u32, String> {
+    if value < 0.0 || value > u32::MAX as f64 {
+        return Err(format!("Ungültige Werkzeugnummer: {value}"));
+    }
+
+    let rounded = value.round();
+    if (value - rounded).abs() > 1e-9 {
+        return Err(format!("Werkzeugnummer muss ganzzahlig sein: {value}"));
+    }
+
+    Ok(rounded as u32)
 }
 
 fn last(map: &BTreeMap<char, Vec<f64>>, key: char) -> Option<&f64> {
     map.get(&key).and_then(|values| values.last())
 }
 
-fn has_motion_coordinates(words: &BTreeMap<char, Vec<f64>>) -> bool {
-    ['X', 'Y', 'Z'].into_iter().any(|key| words.contains_key(&key))
+fn should_emit_motion(words: &BTreeMap<char, Vec<f64>>, motion: MotionMode) -> bool {
+    let has_endpoint = ['X', 'Y', 'Z']
+        .into_iter()
+        .any(|address| words.contains_key(&address));
+
+    if has_endpoint {
+        return true;
+    }
+
+    motion.is_arc()
+        && ['I', 'J', 'K', 'R']
+            .into_iter()
+            .any(|address| words.contains_key(&address))
 }
 
 #[cfg(test)]
@@ -215,5 +262,34 @@ mod tests {
         parser.parse_line("G90 G1 X10").unwrap();
         parser.parse_line("G91 G1 X2.5").unwrap();
         assert_eq!(parser.state().position_mm.x, 12.5);
+    }
+
+    #[test]
+    fn full_circle_ijk_arc_is_emitted_without_endpoint_words() {
+        let mut parser = Parser::new();
+        parser.parse_line("G0 X10 Y0").unwrap();
+        let parsed = parser.parse_line("G3 I-10 J0 F500").unwrap();
+
+        assert!(matches!(
+            parsed.commands.as_slice(),
+            [CanonicalCommand::Move {
+                mode: MotionMode::ArcCounterClockwise,
+                start,
+                end,
+                ..
+            }] if start == end
+        ));
+    }
+
+    #[test]
+    fn fractional_m_code_is_rejected() {
+        let mut parser = Parser::new();
+        assert!(parser.parse_line("M3.2").is_err());
+    }
+
+    #[test]
+    fn fractional_tool_number_is_rejected() {
+        let mut parser = Parser::new();
+        assert!(parser.parse_line("T1.5").is_err());
     }
 }

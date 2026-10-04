@@ -1,16 +1,15 @@
 # Publishing this repository
 
-Recommended repository name:
+Repository:
 
-`Amir-Mobasheraghdam-OrangeCNC-Studio`
+`https://github.com/Amirmobash/OrangeCNC-Studio`
 
-After creating the public GitHub repository:
+Recommended repository description:
 
-1. Replace `REPLACE_WITH_YOUR_GITHUB` in `Cargo.toml`, `CITATION.cff` and `.github/FUNDING.yml` if you use it.
-2. Use this repository description: **OrangeCNC Studio — CNC/G-code workstation in Rust by Amir Mobasheraghdam. German UI, motion planning and simulation.**
-3. Add topics: `amir-mobasheraghdam`, `cnc`, `gcode`, `rust`, `cam`, `simulation`, `gcode-parser`.
-4. In GitHub → Settings → Pages, use **GitHub Actions** as the source.
-5. Keep your GitHub profile display name exactly **Amir Mobasheraghdam** and add the repository to your profile pins.
-6. Submit the resulting GitHub Pages URL to Google Search Console if you control a verified property/domain. Google decides when and how pages are indexed.
+**OrangeCNC Studio — CNC/G-code workstation in Rust by Amir Mobasheraghdam. German UI, motion planning and simulation.**
 
-Do not rename author metadata to unrelated keywords. Consistent, natural identity signals are more useful than keyword stuffing.
+Suggested topics:
+
+`amir-mobasheraghdam`, `cnc`, `gcode`, `rust`, `cam`, `simulation`, `gcode-parser`
+
+For GitHub Pages, publish the `site/` directory with your preferred Pages workflow. Search engines decide when and how pages are indexed; project metadata should stay accurate and natural rather than keyword-stuffed.

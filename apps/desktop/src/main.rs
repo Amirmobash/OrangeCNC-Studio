@@ -10,6 +10,7 @@ fn main() -> eframe::Result<()> {
             .with_min_inner_size([980.0, 680.0]),
         ..Default::default()
     };
+
     eframe::run_native(
         "OrangeCNC Studio — Amir Mobasheraghdam",
         options,
