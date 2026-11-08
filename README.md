@@ -1,5 +1,13 @@
 # OrangeCNC Studio
 
+
+<p align="center">
+  <img src="docs/images/orangecnc-studio-rust-gcode-toolpath-preview.svg" alt="OrangeCNC Studio CNC toolpath visualization, Rust G-code parser and 2D/isometric simulation — conceptual illustration" width="100%" />
+</p>
+
+*Conceptual project illustration; not a screenshot of verified hardware or CAD output.*
+
+
 **OrangeCNC Studio** is an open-source CNC workstation in Rust by **Amir Mobasheraghdam**. The desktop application is German-first and uses a white/orange visual system.
 
 > Author: **Amir Mobasheraghdam**  
